@@ -32,7 +32,7 @@ We will be using Hardhat Network as the local Ethereum network for development.
 
 1.  Install the required packages:
 
-        npm install --save-dev
+        npm install --dev
 
 1.  Compile the smart contract:
 

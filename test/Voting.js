@@ -79,4 +79,26 @@ describe('Voting Contract', () => {
     })
   })
 
+  describe('Adding Voters', () => {
+    it('should add the new voter to the list', async () => {
+      const initialVoters = parseInt(await contract.totalVoters());
+
+      await contract.addVoter(addr1.address);
+      await contract.addVoter(addr2.address);
+      await contract.addVoter(addr3.address);
+
+      expect(await contract.totalVoters()).to.equal(initialVoters + 3);
+    })
+
+    it('allowed for the chair person only', async () => {
+      const initialVoters = parseInt(await contract.totalVoters());
+
+      await expect(contract.connect(addr1).addVoter(addr1.address))
+        .to.be.revertedWith('Only the chair person allowed!');
+
+      const totalVoters = parseInt(await contract.totalVoters());
+      expect(totalVoters).to.equal(initialVoters)
+    })
+  })
+
 })

@@ -48,4 +48,11 @@ contract Voting {
         }
         return (names, voteCounts);
     }
+
+    function addVoter(address addr) external {
+        require(msg.sender == chairperson, 'Only the chair person allowed!');
+        require(voters[addr].alreadyVoted == false, 'The voter already voted.');
+        voters[addr].vote = -1;
+        totalVoters++;
+    }
 }

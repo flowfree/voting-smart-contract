@@ -217,4 +217,5 @@ issue or submit a PR.
 
 License
 -------
-MIT
+MIT License
+Copyright &copy; 2022 Nashruddin Amin

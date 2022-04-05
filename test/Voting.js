@@ -43,13 +43,22 @@ describe('Voting Contract', () => {
       expect(voteCount).to.equal(ethers.BigNumber.from(0));
     })
 
-    it('allowed for the chair person only', async () => {
+    it('should be allowed for the chair person only', async () => {
       expect(await contract.totalCandidates()).to.equal(0);
 
       await expect(contract.connect(addr1).addCandidate('John Doe'))
         .to.be.revertedWith('Only the chair person allowed!');
 
       expect(await contract.totalCandidates()).to.equal(0);
+    })
+
+    it('should be rejected when the voting time has started', async () => {
+      const start = parseInt(Date.now() / 1000) - (60*60);
+      const end = parseInt(Date.now() / 1000) + (60*60);
+      await contract.setVotingTime(start, end);
+
+      await expect(contract.addCandidate('John Doe'))
+        .to.be.revertedWith('Voting has been started!');
     })
   })
 
@@ -90,7 +99,7 @@ describe('Voting Contract', () => {
       expect(await contract.totalVoters()).to.equal(initialVoters + 3);
     })
 
-    it('allowed for the chair person only', async () => {
+    it('should be allowed for the chair person only', async () => {
       const initialVoters = parseInt(await contract.totalVoters());
 
       await expect(contract.connect(addr1).addVoter(addr1.address))
@@ -99,15 +108,29 @@ describe('Voting Contract', () => {
       const totalVoters = parseInt(await contract.totalVoters());
       expect(totalVoters).to.equal(initialVoters)
     })
+
+    it('should be rejected when the voting time has started', async () => {
+      const start = parseInt(Date.now() / 1000) - (60*60);
+      const end = parseInt(Date.now() / 1000) + (60*60);
+      await contract.setVotingTime(start, end);
+
+      await expect(contract.addVoter(addr1.address))
+        .to.be.revertedWith('Voting has been started!');
+    })
   })
 
   describe('Election', () => {
     beforeEach(async () => {
       await contract.addCandidate('John Doe');
       await contract.addCandidate('Jane Doe');
+
       await contract.addVoter(addr1.address);
       await contract.addVoter(addr2.address);
       await contract.addVoter(addr3.address);
+
+      const start = parseInt(Date.now() / 1000);
+      const end = start + 60*60;
+      await contract.setVotingTime(start, end);
     })
 
     it('should have 2 candidates and 3 voters', async () => {
@@ -140,6 +163,22 @@ describe('Voting Contract', () => {
       await contract.connect(addr1).vote(0);
       await expect(contract.connect(addr1).vote(1))
         .to.be.revertedWith('The voter has already voted.');
+    })
+
+    it('should not allow voting beyond the voting time', async () => {
+      const start = parseInt(Date.now() / 1000) - (3600*24);
+      const end = start + 3600;
+      await contract.setVotingTime(start, end);
+
+      await expect(contract.connect(addr1).vote(1))
+        .to.be.revertedWith('Voting time has ended.');
+    })
+
+    it('should not allow addition of new candidates when the voting has started.', async () => {
+      expect(await contract.isVotingTime()).to.equal(true);
+
+      await expect(contract.addCandidate('Jack'))
+        .to.be.revertedWith('Voting has been started!');
     })
   })
 

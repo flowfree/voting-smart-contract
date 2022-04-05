@@ -23,12 +23,17 @@ contract Voting {
 
     address public chairperson;
 
+    uint256 public votingTimeStart;
+    uint256 public votingTimeEnd;
+
     constructor() {
         chairperson = msg.sender;
     }
 
     function addCandidate(string memory name) external {
         require(msg.sender == chairperson, 'Only the chair person allowed!');
+        require(isVotingTime() == false, 'Voting has been started!');
+
         candidates.push(Candidate(name, 0));
         totalCandidates++;
     }
@@ -50,6 +55,7 @@ contract Voting {
 
     function addVoter(address addr) external {
         require(msg.sender == chairperson, 'Only the chair person allowed!');
+        require(isVotingTime() == false, 'Voting has been started!');
         require(voters[addr].canVote == false, 'The voter already exist.');
         require(voters[addr].hasVoted == false, 'The voter already voted.');
 
@@ -58,8 +64,24 @@ contract Voting {
         totalVoters++;
     }
 
+    function setVotingTime(uint256 start, uint256 end) external {
+        require(msg.sender == chairperson, 'Only the chair person allowed!');
+
+        votingTimeStart = start;
+        votingTimeEnd = end;
+    }
+
+    function isVotingTime() public view returns (bool) {
+        if (votingTimeStart <= block.timestamp && block.timestamp <= votingTimeEnd) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     function vote(uint candidateIndex) external {
         require(voters[msg.sender].hasVoted == false, 'The voter has already voted.');
+        require(isVotingTime(), 'Voting time has ended.');
 
         voters[msg.sender].hasVoted = true;
         voters[msg.sender].vote = int(candidateIndex);

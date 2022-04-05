@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: cp .env.example .env
+    - run: cp .env.sample .env
     - run: npm install --dev
     - run: npm run build --if-present
     - run: npx hardhat test

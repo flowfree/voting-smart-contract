@@ -5,7 +5,8 @@ pragma solidity ^0.8.13;
 contract Voting {
 
     struct Voter {
-        bool alreadyVoted;  
+        bool canVote;
+        bool hasVoted;  
         int vote;          
     }
 
@@ -24,8 +25,6 @@ contract Voting {
 
     constructor() {
         chairperson = msg.sender;
-        voters[msg.sender] = Voter(false, -1);
-        totalVoters++;
     }
 
     function addCandidate(string memory name) external {
@@ -51,8 +50,29 @@ contract Voting {
 
     function addVoter(address addr) external {
         require(msg.sender == chairperson, 'Only the chair person allowed!');
-        require(voters[addr].alreadyVoted == false, 'The voter already voted.');
+        require(voters[addr].canVote == false, 'The voter already exist.');
+        require(voters[addr].hasVoted == false, 'The voter already voted.');
+
+        voters[addr].canVote = true;
         voters[addr].vote = -1;
         totalVoters++;
+    }
+
+    function vote(uint candidateIndex) external {
+        require(voters[msg.sender].hasVoted == false, 'The voter has already voted.');
+
+        voters[msg.sender].hasVoted = true;
+        voters[msg.sender].vote = int(candidateIndex);
+        candidates[candidateIndex].voteCount++;
+    }
+
+    function getWinningCandidate() public view returns (string memory name) {
+        uint winningVoteCount = 0;
+        for (uint i = 0; i < totalCandidates; i++) {
+            if (candidates[i].voteCount > winningVoteCount) {
+                winningVoteCount = candidates[i].voteCount;
+                name = candidates[i].name;
+            }
+        }
     }
 }

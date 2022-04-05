@@ -20,8 +20,8 @@ describe('Voting Contract', () => {
       expect(await contract.totalCandidates()).to.equal(0);
     })
 
-    it('should have 1 voter', async () => {
-      expect(await contract.totalVoters()).to.equal(1);
+    it('should have 0 voters', async () => {
+      expect(await contract.totalVoters()).to.equal(0);
     })
   })
 
@@ -98,6 +98,48 @@ describe('Voting Contract', () => {
 
       const totalVoters = parseInt(await contract.totalVoters());
       expect(totalVoters).to.equal(initialVoters)
+    })
+  })
+
+  describe('Election', () => {
+    beforeEach(async () => {
+      await contract.addCandidate('John Doe');
+      await contract.addCandidate('Jane Doe');
+      await contract.addVoter(addr1.address);
+      await contract.addVoter(addr2.address);
+      await contract.addVoter(addr3.address);
+    })
+
+    it('should have 2 candidates and 3 voters', async () => {
+      expect(await contract.totalCandidates()).to.equal(2);
+      expect(await contract.totalVoters()).to.equal(3);
+    })
+
+    it('should allow voters to vote', async () => {
+      await contract.connect(addr1).vote(0);
+      await contract.connect(addr2).vote(1);
+      await contract.connect(addr3).vote(0);
+
+      let name, totalVotes;
+
+      // John Doe should received 2 votes 
+      [name, totalVotes] = await contract.getCandidate(0);
+      expect(name).to.equal('John Doe');
+      expect(totalVotes).to.equal(2);
+
+      // Jane Doe should received 1 vote
+      [name, totalVotes] = await contract.getCandidate(1);
+      expect(name).to.equal('Jane Doe');
+      expect(totalVotes).to.equal(1);
+
+      // John Doe should be declared as the winner
+      expect(await contract.getWinningCandidate()).to.equal('John Doe');
+    })
+
+    it('should allow each voter to vote only once', async () => {
+      await contract.connect(addr1).vote(0);
+      await expect(contract.connect(addr1).vote(1))
+        .to.be.revertedWith('The voter has already voted.');
     })
   })
 

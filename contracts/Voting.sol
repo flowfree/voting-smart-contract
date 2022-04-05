@@ -109,6 +109,7 @@ contract Voting {
     function vote(uint candidateIndex) external {
         require(voters[msg.sender].hasVoted == false, 'The voter has already voted.');
         require(isVotingTime(), 'Voting time has ended.');
+        require(candidateIndex < totalCandidates, 'Invalid candidate.');
 
         voters[msg.sender].hasVoted = true;
         voters[msg.sender].vote = int(candidateIndex);

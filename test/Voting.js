@@ -165,6 +165,11 @@ describe('Voting Contract', () => {
         .to.be.revertedWith('The voter has already voted.');
     })
 
+    it('should not allow voting with invalid candidate', async () => {
+      await expect(contract.connect(addr1).vote(9999))
+        .to.be.revertedWith('Invalid candidate');
+    })
+
     it('should not allow voting beyond the voting time', async () => {
       const start = parseInt(Date.now() / 1000) - (3600*24);
       const end = start + 3600;
